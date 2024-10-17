@@ -3,11 +3,14 @@ using Bogus;
 using Dapper;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Z.Dapper.Plus;
 
 namespace AdvancedDatabaseTechniques;
 
 [MemoryDiagnoser]
 [RPlotExporter]
+[MaxIterationCount(16)]
+[InvocationCount(1)]
 public class DatabaseComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
@@ -18,7 +21,7 @@ public class DatabaseComparison
 
     private const string CreateTableQuery = """
                                             
-                                                            CREATE TABLE IF NOT EXISTS employees (
+                                                            CREATE TABLE IF NOT EXISTS person (
                                                                 id SERIAL PRIMARY KEY,
                                                                 first_name VARCHAR(50),
                                                                 last_name VARCHAR(50),
@@ -26,17 +29,16 @@ public class DatabaseComparison
                                                             )
                                             """;
 
-    private const string DeleteTableDataQuery = "DELETE FROM employees";
+    private const string DeleteTableDataQuery = "DELETE FROM person";
 
     private const string InsertTableDataQuery =
-        "INSERT INTO employees (id, first_name, last_name, phone_number) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
+        "INSERT INTO employees (Id, FirstName, LastName, PhoneNumber) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
 
 
     private NpgsqlConnection _npgsqlConnection = default!;
     private readonly List<Person> _people = [];
 
-    [Params(1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000)]
-    public int N;
+    [Params(1, 10, 100, 10_000, 100_000, 1_000_000, 10_000_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -78,10 +80,18 @@ public class DatabaseComparison
         _npgsqlConnection.Dispose();
     }
 
+    // Comment this out for large amount of data
     [Benchmark]
     public void AddPostgresqlData()
     {
         _npgsqlConnection.Execute(InsertTableDataQuery, _people);
+    }
+
+    [Benchmark]
+    public void AddPostgreSqlDataBulkInsert()
+    {
+        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
+            .BulkInsert(_people);
     }
 
     // [Benchmark]
