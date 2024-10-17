@@ -1,4 +1,4 @@
 ﻿using AdvancedDatabaseTechniques;
 using BenchmarkDotNet.Running;
 
-var results = BenchmarkRunner.Run<DatabaseComparison>();
+BenchmarkRunner.Run<DatabaseComparison>();

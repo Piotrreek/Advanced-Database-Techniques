@@ -1,4 +1,8 @@
 using BenchmarkDotNet.Attributes;
+using Bogus;
+using Dapper;
+using Npgsql;
+using Testcontainers.PostgreSql;
 
 namespace AdvancedDatabaseTechniques;
 
@@ -6,35 +10,83 @@ namespace AdvancedDatabaseTechniques;
 [RPlotExporter]
 public class DatabaseComparison
 {
-    private object[] _data;
-    
-    [Params(1, 10, 100, 1000, 10_000, 100000, 1_000_000, 10_000_000)]
+    private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
+        .WithUsername("username")
+        .WithPassword("password")
+        .WithImage("postgres:latest")
+        .Build();
+
+    private const string CreateTableQuery = """
+                                            
+                                                            CREATE TABLE IF NOT EXISTS employees (
+                                                                id SERIAL PRIMARY KEY,
+                                                                first_name VARCHAR(50),
+                                                                last_name VARCHAR(50),
+                                                                phone_number VARCHAR(50)
+                                                            )
+                                            """;
+
+    private const string DeleteTableDataQuery = "DELETE FROM employees";
+
+    private const string InsertTableDataQuery =
+        "INSERT INTO employees (id, first_name, last_name, phone_number) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
+
+
+    private NpgsqlConnection _npgsqlConnection = default!;
+    private readonly List<Person> _people = [];
+
+    [Params(1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000)]
     public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
     {
-        // TODO: Seed using Bogus with data for specified topic
-        _data = new object[N];
+        _postgreSqlContainer.StartAsync().GetAwaiter().GetResult();
+
+        _npgsqlConnection = new NpgsqlConnection(_postgreSqlContainer.GetConnectionString());
+        _npgsqlConnection.Open();
+
+        using var command = new NpgsqlCommand(CreateTableQuery, _npgsqlConnection);
+        command.ExecuteNonQuery();
+
+        var peopleGenerator = new Faker<Person>()
+            .RuleFor(x => x.FirstName, f => f.Name.FirstName())
+            .RuleFor(x => x.LastName, f => f.Name.LastName())
+            .RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber());
+
+        for (var i = 0; i < N; i++)
+        {
+            var person = peopleGenerator.Generate();
+            person.Id = i;
+            _people.Add(person);
+        }
     }
 
-    [IterationSetup]
-    public void IterationSetup()
+    [IterationCleanup]
+    public void IterationCleanup()
     {
-        // TODO: Clean database in here, so that it is empty before each benchmark
+        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
+        command.ExecuteNonQuery();
     }
-    
-    // TODO: In each benchmark insert data to correct database
-    
-    [Benchmark]
-    public void AddPostgresql()
+
+    [GlobalCleanup]
+    public void GlobalCleanup()
     {
-        Console.Write("adfadfsdfs");
+        _postgreSqlContainer.StopAsync().GetAwaiter().GetResult();
+        _postgreSqlContainer.DisposeAsync().GetAwaiter().GetResult();
+        _npgsqlConnection.Close();
+        _npgsqlConnection.Dispose();
     }
 
     [Benchmark]
-    public void AddRedis()
+    public void AddPostgresqlData()
     {
-        Console.Write("fsngsuifngosdfno");
+        _npgsqlConnection.Execute(InsertTableDataQuery, _people);
     }
+
+    // [Benchmark]
+    // public void AddRedis()
+    // {
+    //     Console.Write("fsngsuifngosdfno");
+    // }
 }
