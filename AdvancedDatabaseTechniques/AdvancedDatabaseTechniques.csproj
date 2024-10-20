@@ -9,12 +9,15 @@
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-      <PackageReference Include="Bogus" Version="35.6.1" />
       <PackageReference Include="Dapper" Version="2.1.35" />
       <PackageReference Include="Npgsql" Version="8.0.4" />
       <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
       <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
       <PackageReference Include="Z.Dapper.Plus" Version="7.5.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DataGenerator\DataGenerator.csproj" />
     </ItemGroup>
 
 </Project>
