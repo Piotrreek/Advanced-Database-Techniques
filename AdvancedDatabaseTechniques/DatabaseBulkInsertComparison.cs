@@ -1,9 +1,9 @@
 using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-using Dapper;
 using DataGenerator;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Z.Dapper.Plus;
 
 namespace AdvancedDatabaseTechniques;
 
@@ -11,7 +11,7 @@ namespace AdvancedDatabaseTechniques;
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseInsertComparison
+public class DatabaseBulkInsertComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -31,13 +31,13 @@ public class DatabaseInsertComparison
     private const string DeleteTableDataQuery = "DELETE FROM person";
 
     private const string InsertTableDataQuery =
-        "INSERT INTO person (id, first_name, last_name, phone_number) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
+        "INSERT INTO employees (Id, FirstName, LastName, PhoneNumber) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
 
 
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000)] public int N;
+    [Params(1, 10, 100, 10_000, 100_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -80,14 +80,15 @@ public class DatabaseInsertComparison
     }
 
     [Benchmark]
-    public void AddPostgresqlData()
+    public void AddPostgreSqlDataBulkInsert()
     {
-        _npgsqlConnection.Execute(InsertTableDataQuery, _people);
+        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
+            .BulkInsert(_people);
     }
 
     // [Benchmark]
-    // public void AddRedisData()
+    // public void AddRedisDataBulkInsert()
     // {
-    //    
+    //     
     // }
 }
