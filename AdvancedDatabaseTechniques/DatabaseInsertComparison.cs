@@ -1,6 +1,6 @@
+using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-using Bogus;
-using Dapper;
+using DataGenerator;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Z.Dapper.Plus;
@@ -11,7 +11,7 @@ namespace AdvancedDatabaseTechniques;
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseComparison
+public class DatabaseInsertComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -20,7 +20,6 @@ public class DatabaseComparison
         .Build();
 
     private const string CreateTableQuery = """
-                                            
                                                             CREATE TABLE IF NOT EXISTS person (
                                                                 id SERIAL PRIMARY KEY,
                                                                 first_name VARCHAR(50),
@@ -36,9 +35,9 @@ public class DatabaseComparison
 
 
     private NpgsqlConnection _npgsqlConnection = default!;
-    private readonly List<Person> _people = [];
+    private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000, 100_000, 1_000_000, 10_000_000)] public int N;
+    [Params(1, 10, 100, 10_000, 100_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -51,17 +50,17 @@ public class DatabaseComparison
         using var command = new NpgsqlCommand(CreateTableQuery, _npgsqlConnection);
         command.ExecuteNonQuery();
 
-        var peopleGenerator = new Faker<Person>()
-            .RuleFor(x => x.FirstName, f => f.Name.FirstName())
-            .RuleFor(x => x.LastName, f => f.Name.LastName())
-            .RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber());
+        using var reader =
+            new StreamReader(
+                $@"{Environment.CurrentDirectory}\..\..\..\..\..\..\..\..\DataGenerator\PeopleData\people-{N}.json");
 
-        for (var i = 0; i < N; i++)
-        {
-            var person = peopleGenerator.Generate();
-            person.Id = i;
-            _people.Add(person);
-        }
+        _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
+            .Select((x, index) =>
+            {
+                x.Id = index;
+
+                return x;
+            }).ToList();
     }
 
     [IterationCleanup]
@@ -81,11 +80,11 @@ public class DatabaseComparison
     }
 
     // Comment this out for large amount of data
-    [Benchmark]
-    public void AddPostgresqlData()
-    {
-        _npgsqlConnection.Execute(InsertTableDataQuery, _people);
-    }
+    // [Benchmark]
+    // public void AddPostgresqlData()
+    // {
+    //     _npgsqlConnection.Execute(InsertTableDataQuery, _people);
+    // }
 
     [Benchmark]
     public void AddPostgreSqlDataBulkInsert()

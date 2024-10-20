@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AdvancedDatabaseTechniques;
+namespace DataGenerator;
 
 [Table("person")]
-internal sealed class Person
+public sealed class Person
 {
     [Key]
     [Column("id")]
