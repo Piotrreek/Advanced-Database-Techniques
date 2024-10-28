@@ -1,17 +1,17 @@
 using System.Text.Json;
 using BenchmarkDotNet.Attributes;
+using Dapper;
 using DataGenerator;
 using Npgsql;
 using Testcontainers.PostgreSql;
-using Z.Dapper.Plus;
 
-namespace AdvancedDatabaseTechniques;
+namespace AdvancedDatabaseTechniques.Postgres;
 
 [MemoryDiagnoser]
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseBulkInsertComparison
+public class DatabaseInsertComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -31,13 +31,13 @@ public class DatabaseBulkInsertComparison
     private const string DeleteTableDataQuery = "DELETE FROM person";
 
     private const string InsertTableDataQuery =
-        "INSERT INTO employees (Id, FirstName, LastName, PhoneNumber) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
+        "INSERT INTO person (id, first_name, last_name, phone_number) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
 
 
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000, 100_000)] public int N;
+    [Params(1, 10, 100, 10_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -52,7 +52,7 @@ public class DatabaseBulkInsertComparison
 
         using var reader =
             new StreamReader(
-                $@"{Environment.CurrentDirectory}\..\..\..\..\..\..\..\..\DataGenerator\PeopleData\people-{N}.json");
+                $@"{Environment.CurrentDirectory}/../../../../../../../../DataGenerator/PeopleData/people-{N}.json");
 
         _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
             .Select((x, index) =>
@@ -80,15 +80,14 @@ public class DatabaseBulkInsertComparison
     }
 
     [Benchmark]
-    public void AddPostgreSqlDataBulkInsert()
+    public void AddPostgresqlData()
     {
-        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
-            .BulkInsert(_people);
+        _npgsqlConnection.Execute(InsertTableDataQuery, _people);
     }
 
     // [Benchmark]
-    // public void AddRedisDataBulkInsert()
+    // public void AddRedisData()
     // {
-    //     
+    //    
     // }
 }

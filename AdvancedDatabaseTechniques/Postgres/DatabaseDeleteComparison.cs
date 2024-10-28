@@ -6,13 +6,13 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Z.Dapper.Plus;
 
-namespace AdvancedDatabaseTechniques;
+namespace AdvancedDatabaseTechniques.Postgres;
 
 [MemoryDiagnoser]
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseSelectComparison
+public class DatabaseDeleteComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -28,10 +28,9 @@ public class DatabaseSelectComparison
                                                                 phone_number VARCHAR(50)
                                                             )
                                             """;
-    
+
     private const string DeleteTableDataQuery = "DELETE FROM person";
 
-    
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
@@ -50,7 +49,7 @@ public class DatabaseSelectComparison
 
         using var reader =
             new StreamReader(
-                $@"{Environment.CurrentDirectory}\..\..\..\..\..\..\..\..\DataGenerator\PeopleData\people-{N}.json");
+                $@"{Environment.CurrentDirectory}/../../../../../../../../DataGenerator/PeopleData/people-{N}.json");
 
         _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
             .Select((x, index) =>
@@ -77,22 +76,9 @@ public class DatabaseSelectComparison
             .BulkInsert(_people);
     }
 
-    [IterationCleanup]
-    public void IterationCleanup()
-    {
-        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
-        command.ExecuteNonQuery();
-    }
-    
     [Benchmark]
-    public void SelectPostgreSqlData()
+    public void DeletePostgreSqlData()
     {
-        _npgsqlConnection.Execute("SELECT * FROM person");
-    }
-
-    [Benchmark]
-    public void SelectWherePostgreSqlData()
-    {
-        _npgsqlConnection.Execute("SELECT * FROM person WHERE first_name = 'Laura'");
+        _npgsqlConnection.Execute(DeleteTableDataQuery);
     }
 }

@@ -6,13 +6,13 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Z.Dapper.Plus;
 
-namespace AdvancedDatabaseTechniques;
+namespace AdvancedDatabaseTechniques.Postgres;
 
 [MemoryDiagnoser]
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseDeleteComparison
+public class DatabaseSelectWithIndexComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -31,10 +31,14 @@ public class DatabaseDeleteComparison
 
     private const string DeleteTableDataQuery = "DELETE FROM person";
 
+    private const string CreateIndexQuery = "CREATE INDEX  idx_person_first_name ON person(first_name)";
+
+
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000, 100_000, 1_000_000)] public int N;
+    [Params(1, 10, 100, 10_000, 100_000, 1_000_000)]
+    public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -47,9 +51,12 @@ public class DatabaseDeleteComparison
         using var command = new NpgsqlCommand(CreateTableQuery, _npgsqlConnection);
         command.ExecuteNonQuery();
 
+        using var createIndexCommand = new NpgsqlCommand(CreateIndexQuery, _npgsqlConnection);
+        createIndexCommand.ExecuteNonQuery();
+
         using var reader =
             new StreamReader(
-                $@"{Environment.CurrentDirectory}\..\..\..\..\..\..\..\..\DataGenerator\PeopleData\people-{N}.json");
+                $@"{Environment.CurrentDirectory}/../../../../../../../../DataGenerator/PeopleData/people-{N}.json");
 
         _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
             .Select((x, index) =>
@@ -76,9 +83,16 @@ public class DatabaseDeleteComparison
             .BulkInsert(_people);
     }
 
-    [Benchmark]
-    public void DeletePostgreSqlData()
+    [IterationCleanup]
+    public void IterationCleanup()
     {
-        _npgsqlConnection.Execute(DeleteTableDataQuery);
+        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
+        command.ExecuteNonQuery();
+    }
+    
+    [Benchmark]
+    public void SelectWherePostgreSqlData()
+    {
+        _npgsqlConnection.Execute("SELECT * FROM person WHERE first_name = 'Laura'");
     }
 }

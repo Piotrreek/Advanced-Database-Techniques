@@ -4,14 +4,15 @@ using Dapper;
 using DataGenerator;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Z.Dapper.Plus;
 
-namespace AdvancedDatabaseTechniques;
+namespace AdvancedDatabaseTechniques.Postgres;
 
 [MemoryDiagnoser]
 [RPlotExporter]
 [MaxIterationCount(16)]
 [InvocationCount(1)]
-public class DatabaseInsertComparison
+public class DatabaseUpdateComparison
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder()
         .WithUsername("username")
@@ -27,17 +28,14 @@ public class DatabaseInsertComparison
                                                                 phone_number VARCHAR(50)
                                                             )
                                             """;
-
+    
     private const string DeleteTableDataQuery = "DELETE FROM person";
 
-    private const string InsertTableDataQuery =
-        "INSERT INTO person (id, first_name, last_name, phone_number) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
-
-
+    
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000)] public int N;
+    [Params(1, 10, 100, 10_000, 100_000, 1_000_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -52,7 +50,7 @@ public class DatabaseInsertComparison
 
         using var reader =
             new StreamReader(
-                $@"{Environment.CurrentDirectory}\..\..\..\..\..\..\..\..\DataGenerator\PeopleData\people-{N}.json");
+                $@"{Environment.CurrentDirectory}/../../../../../../../../DataGenerator/PeopleData/people-{N}.json");
 
         _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
             .Select((x, index) =>
@@ -61,13 +59,6 @@ public class DatabaseInsertComparison
 
                 return x;
             }).ToList();
-    }
-
-    [IterationCleanup]
-    public void IterationCleanup()
-    {
-        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
-        command.ExecuteNonQuery();
     }
 
     [GlobalCleanup]
@@ -79,15 +70,23 @@ public class DatabaseInsertComparison
         _npgsqlConnection.Dispose();
     }
 
-    [Benchmark]
-    public void AddPostgresqlData()
+    [IterationSetup]
+    public void IterationSetup()
     {
-        _npgsqlConnection.Execute(InsertTableDataQuery, _people);
+        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
+            .BulkInsert(_people);
     }
 
-    // [Benchmark]
-    // public void AddRedisData()
-    // {
-    //    
-    // }
+    [IterationCleanup]
+    public void IterationCleanup()
+    {
+        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
+        command.ExecuteNonQuery();
+    }
+    
+    [Benchmark]
+    public void DeletePostgreSqlData()
+    {
+        _npgsqlConnection.Execute("UPDATE person SET first_name = 'Jacek'");
+    }
 }

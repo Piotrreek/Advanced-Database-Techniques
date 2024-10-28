@@ -14,7 +14,7 @@ int[] counts = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000];
 foreach (var count in counts)
 {
     await using var writer =
-        new StreamWriter($@"{Environment.CurrentDirectory}\..\..\..\PeopleData\people-{count}.json", false,
+        new StreamWriter($@"{Environment.CurrentDirectory}/../../../PeopleData/people-{count}.json", false,
             new UTF8Encoding(false));
 
     writer.Write("[");
