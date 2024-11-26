@@ -18,7 +18,7 @@ public sealed class EmergencyContact
     public string ContactName { get; set; } = default!;
 
     [Column("relationship")]
-    public string Relationship { get; set; } = default!; // e.g., Parent, Spouse
+    public string Relationship { get; set; } = default!;
 
     [Column("phone_number")]
     public string PhoneNumber { get; set; } = default!;

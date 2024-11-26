@@ -6,7 +6,7 @@ using BenchmarkDotNet.Running;
 // POSTGRES
 
 // BenchmarkRunner.Run<DatabaseBulkInsertComparison>();
-// BenchmarkRunner.Run<DatabaseInsertComparison>();
+BenchmarkRunner.Run<DatabaseInsertComparison>();
 // BenchmarkRunner.Run<DatabaseDeleteComparison>();
 // BenchmarkRunner.Run<DatabaseUpdateComparison>();
 // BenchmarkRunner.Run<DatabaseSelectComparison>();
@@ -14,7 +14,7 @@ using BenchmarkDotNet.Running;
 
 // REDIS
 // BenchmarkRunner.Run<DatabaseBulkInsertComparisonRedis>();
-BenchmarkRunner.Run<DatabaseSelectComparisonRedis>();
+// BenchmarkRunner.Run<DatabaseSelectComparisonRedis>();
 // BenchmarkRunner.Run<DatabaseSelectWithIndexComparisonRedis>();
 // BenchmarkRunner.Run<DatabaseDeleteComparisonRedis>();
 // BenchmarkRunner.Run<DatabaseUpdateComparisonRedis>();
