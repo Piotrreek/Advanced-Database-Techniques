@@ -1,9 +1,8 @@
-using System.Text.Json;
 using BenchmarkDotNet.Attributes;
+using Dapper;
 using DataGenerator;
 using Npgsql;
 using Testcontainers.PostgreSql;
-using Testcontainers.Redis;
 using Z.Dapper.Plus;
 
 namespace AdvancedDatabaseTechniques.Postgres;
@@ -20,25 +19,10 @@ public class DatabaseBulkInsertComparison
         .WithImage("postgres:latest")
         .Build();
 
-    private const string CreateTableQuery = """
-                                                            CREATE TABLE IF NOT EXISTS person (
-                                                                id SERIAL PRIMARY KEY,
-                                                                first_name VARCHAR(50),
-                                                                last_name VARCHAR(50),
-                                                                phone_number VARCHAR(50)
-                                                            )
-                                            """;
-
-    private const string DeleteTableDataQuery = "DELETE FROM person";
-
-    private const string InsertTableDataQuery =
-        "INSERT INTO employees (Id, FirstName, LastName, PhoneNumber) VALUES (@Id, @FirstName, @LastName, @PhoneNumber)";
-
-
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 10_000, 100_000, 1000_000)] public int N;
+    [Params(1, 10, 100, 10_000)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -48,27 +32,16 @@ public class DatabaseBulkInsertComparison
         _npgsqlConnection = new NpgsqlConnection(_postgreSqlContainer.GetConnectionString());
         _npgsqlConnection.Open();
 
-        using var command = new NpgsqlCommand(CreateTableQuery, _npgsqlConnection);
+        using var command = new NpgsqlCommand(Queries.CreateTablesQuery, _npgsqlConnection);
         command.ExecuteNonQuery();
 
-        using var reader =
-            new StreamReader(
-                $@"{Environment.CurrentDirectory}/../../../../../../../../DataGenerator/PeopleData/people-{N}.json");
-
-        _people = JsonSerializer.Deserialize<List<Person>>(reader.ReadToEnd())!
-            .Select((x, index) =>
-            {
-                x.Id = index;
-
-                return x;
-            }).ToList();
+        _people = DataReader.ReadPeople(N);
     }
 
     [IterationCleanup]
     public void IterationCleanup()
     {
-        var command = new NpgsqlCommand(DeleteTableDataQuery, _npgsqlConnection);
-        command.ExecuteNonQuery();
+        _npgsqlConnection.Execute(Queries.TruncateTablesQuery);
     }
 
     [GlobalCleanup]
@@ -83,13 +56,15 @@ public class DatabaseBulkInsertComparison
     [Benchmark]
     public void AddPostgreSqlDataBulkInsert()
     {
-        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
-            .BulkInsert(_people);
-    }
+        using var transaction = _npgsqlConnection.BeginTransaction();
 
-    // [Benchmark]
-    // public void AddRedisDataBulkInsert()
-    // {
-    //     
-    // }
+        _npgsqlConnection.UseBulkOptions(x => x.InsertKeepIdentity = true)
+            .BulkInsert(_people)
+            .BulkInsert(_people.Select(x => x.EmergencyContact))
+            .BulkInsert(_people.Select(x => x.Address))
+            .BulkInsert(_people.Select(x => x.Job))
+            .BulkInsert(_people.Select(x => x.SocialMedia));
+
+        transaction.Commit();
+    }
 }

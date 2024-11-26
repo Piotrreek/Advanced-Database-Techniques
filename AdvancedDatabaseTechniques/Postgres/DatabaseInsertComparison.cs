@@ -21,7 +21,7 @@ public class DatabaseInsertComparison
     private NpgsqlConnection _npgsqlConnection = default!;
     private List<Person> _people = [];
 
-    [Params(1, 10, 100, 1000)] public int N;
+    [Params(1, 10, 100)] public int N;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -40,8 +40,7 @@ public class DatabaseInsertComparison
     [IterationCleanup]
     public void IterationCleanup()
     {
-        var command = new NpgsqlCommand(Queries.DeletePersonDataQuery, _npgsqlConnection);
-        command.ExecuteNonQuery();
+        _npgsqlConnection.Execute(Queries.TruncateTablesQuery);
     }
 
     [GlobalCleanup]

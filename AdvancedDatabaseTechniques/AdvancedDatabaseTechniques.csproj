@@ -14,7 +14,7 @@
       <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
       <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
       <PackageReference Include="Testcontainers.Redis" Version="3.9.0" />
-      <PackageReference Include="Z.Dapper.Plus" Version="7.5.3" />
+      <PackageReference Include="Z.Dapper.Plus" Version="7.5.5" />
     </ItemGroup>
 
     <ItemGroup>

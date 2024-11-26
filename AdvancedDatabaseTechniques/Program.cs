@@ -5,8 +5,8 @@ using BenchmarkDotNet.Running;
 
 // POSTGRES
 
-// BenchmarkRunner.Run<DatabaseBulkInsertComparison>();
-BenchmarkRunner.Run<DatabaseInsertComparison>();
+BenchmarkRunner.Run<DatabaseBulkInsertComparison>();
+// BenchmarkRunner.Run<DatabaseInsertComparison>();
 // BenchmarkRunner.Run<DatabaseDeleteComparison>();
 // BenchmarkRunner.Run<DatabaseUpdateComparison>();
 // BenchmarkRunner.Run<DatabaseSelectComparison>();

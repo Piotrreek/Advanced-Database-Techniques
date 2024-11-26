@@ -44,8 +44,8 @@ public class Queries
                                            );
                                            """;
 
-    public const string DeletePersonDataQuery = "DELETE FROM person";
-
+    public const string TruncateTablesQuery = "TRUNCATE TABLE person CASCADE";
+    
     public const string InsertEmergencyContactDataQuery =
         "INSERT INTO emergency_contact (id, person_id, contact_name, relationship, phone_number, email_address) VALUES (@Id, @PersonId, @ContactName, @Relationship, @PhoneNumber, @EmailAddress)";
 
