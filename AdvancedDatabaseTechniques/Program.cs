@@ -1,6 +1,4 @@
-﻿using AdvancedDatabaseTechniques;
-using AdvancedDatabaseTechniques.Postgres;
-using AdvancedDatabaseTechniques.Redis;
+﻿using AdvancedDatabaseTechniques.Postgres;
 using BenchmarkDotNet.Running;
 
 // POSTGRES
@@ -9,8 +7,8 @@ using BenchmarkDotNet.Running;
 // BenchmarkRunner.Run<DatabaseInsertComparison>();
 // BenchmarkRunner.Run<DatabaseDeleteComparison>();
 // BenchmarkRunner.Run<DatabaseUpdateComparison>();
-BenchmarkRunner.Run<DatabaseSelectComparison>();
-// BenchmarkRunner.Run<DatabaseSelectWithIndexComparison>();
+// BenchmarkRunner.Run<DatabaseSelectComparison>();
+BenchmarkRunner.Run<DatabaseSelectWithIndexComparison>();
 
 // REDIS
 // BenchmarkRunner.Run<DatabaseBulkInsertComparisonRedis>();

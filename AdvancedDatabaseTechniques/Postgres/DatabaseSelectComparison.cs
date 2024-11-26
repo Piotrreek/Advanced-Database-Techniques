@@ -1,4 +1,3 @@
-using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using Dapper;
 using DataGenerator;
