@@ -37,7 +37,7 @@ var personGenerator = new Faker<Person>("pl")
     .RuleFor(x => x.Job, _ => jobGenerator.Generate())
     .RuleFor(x => x.SocialMedia, _ => socialMediaGenerator.Generate());
 
-int[] counts = [1, 10, 100, 1000, 10_000];
+int[] counts = [1, 10, 100, 1000, 10_000, 100_000];
 
 foreach (var count in counts)
 {

@@ -1,18 +1,31 @@
-﻿using AdvancedDatabaseTechniques.Postgres;
+﻿using AdvancedDatabaseTechniques.Delete;
+using AdvancedDatabaseTechniques.Insert;
+using AdvancedDatabaseTechniques.Postgres;
+using AdvancedDatabaseTechniques.Select;
+using AdvancedDatabaseTechniques.Update;
 using BenchmarkDotNet.Running;
 
-// POSTGRES
+// Insert
+// BenchmarkRunner.Run<InsertComparison>();
+// BenchmarkRunner.Run<BulkInsertComparison>();
 
-// BenchmarkRunner.Run<DatabaseBulkInsertComparison>();
-// BenchmarkRunner.Run<DatabaseInsertComparison>();
-// BenchmarkRunner.Run<DatabaseDeleteComparison>();
-// BenchmarkRunner.Run<DatabaseUpdateComparison>();
-// BenchmarkRunner.Run<DatabaseSelectComparison>();
-BenchmarkRunner.Run<DatabaseSelectWithIndexComparison>();
+// Select
+// BenchmarkRunner.Run<SelectComparison>();
+// BenchmarkRunner.Run<SelectRedisFTSearchComparison>();
+// BenchmarkRunner.Run<SelectOneFieldComparison>();
+// BenchmarkRunner.Run<SelectTopComparison>();
+// BenchmarkRunner.Run<SelectWithCountComparison>();
+// BenchmarkRunner.Run<SelectWithBetweenComparison>();
+// BenchmarkRunner.Run<SelectWithMatchPatternComparison>();
+// BenchmarkRunner.Run<SelectWithWhereComparison>();
+// BenchmarkRunner.Run<SelectWithOneJoinsComparison>();
+// BenchmarkRunner.Run<SelectWithTwoJoinsComparison>();
+// BenchmarkRunner.Run<SelectWithFourJoinsComparison>();
+// BenchmarkRunner.Run<SelectWithIndexComparison>();
 
-// REDIS
-// BenchmarkRunner.Run<DatabaseBulkInsertComparisonRedis>();
-// BenchmarkRunner.Run<DatabaseSelectComparisonRedis>();
-// BenchmarkRunner.Run<DatabaseSelectWithIndexComparisonRedis>();
-// BenchmarkRunner.Run<DatabaseDeleteComparisonRedis>();
-// BenchmarkRunner.Run<DatabaseUpdateComparisonRedis>();
+// Update
+// BenchmarkRunner.Run<UpdateComparison>();
+
+// Delete
+BenchmarkRunner.Run<DeleteComparison>();
+BenchmarkRunner.Run<TruncateComparison>();
